@@ -1,0 +1,5 @@
+node_modules/
+tsdist/
+src/**/*test.js
+private-types.d.ts
+README.md
