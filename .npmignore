@@ -1,6 +1,6 @@
 node_modules/
 tsdist/
+.github/
 src/**/*test.js
-.github
 private-types.d.ts
 README.md
