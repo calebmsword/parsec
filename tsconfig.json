@@ -5,6 +5,8 @@
             "ES2015", 
             "DOM"
         ],
+        "moduleResolution": "Node",
+        "allowSyntheticDefaultImports": true,
         "target": "ES2015",
         "allowJs": true,
         "checkJs": true,
