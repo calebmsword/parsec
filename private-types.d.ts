@@ -1,7 +1,7 @@
 export interface ActionSpec {
     value?: any,
     reason?: any,
-    requestorIndex?: number
+    requestorIndex: number
 }
 
 export interface Reason extends Error {

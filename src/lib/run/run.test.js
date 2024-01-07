@@ -6,6 +6,8 @@ import { FactoryName } from "../constants.js";
 
 mock.timers.enable(["setTimeout"]);
 
+// mock.timers.tick
+
 describe("run arguments", () => {
     test("if no requestors are provided, only timeout occurs", () => {
         const timeout = mock.fn();
@@ -348,10 +350,10 @@ describe("cancellor", () => {
         assert.strictEqual(0, requestorStore.length);
     });
 
-    test("calls every existing cancellor for each unfinished requestor", () => {
+    test("calls every existing cancellor for each unfinished requestor", t => {
         /** @type {import("../../../private-types.js").Reason[]} */
         const reasonStore = [];
-
+        
         /** @type {import("../../../public-types.js").Requestor} */
         const requestor01 = receiver => {
             receiver({ value: "value" });

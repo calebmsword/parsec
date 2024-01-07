@@ -28,25 +28,6 @@ export function makeReason(spec) {
 }
 
 /**
- * Returns the length of the provided array.
- * `undefined` has length 0. Providing any type other than array or `undefined` 
- * causes a reason to be thrown.
- * @param {any} candidateArray 
- * @param {String} factoryName 
- * @returns {Number}
- */
-export function getArrayLength(candidateArray, factoryName) {
-    if (Array.isArray(candidateArray)) return candidateArray.length;
-    if (candidateArray === undefined) return 0;
-    
-    throw makeReason({ 
-        factoryName: factoryName, 
-        excuse: "Not an array!", 
-        evidence: candidateArray 
-    });
-}
-
-/**
  * Throws if the provided callback is not a proper receiver.
  * @param {import("../../../public-types").Receiver} receiver 
  * @param {string} factoryName 

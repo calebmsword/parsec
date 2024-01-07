@@ -3,8 +3,7 @@ import { describe, test } from "node:test";
 
 import {
     isFunction, 
-    makeReason, 
-    getArrayLength, 
+    makeReason,
     checkReceiver,
     checkRequestors
 } from "./utils.js";
@@ -90,48 +89,6 @@ describe("makeReason", () => {
     });
 });
 
-describe("getArrayLength", () => {
-    test("It gets the correct array length", () => {
-        const array = [1, 2, 3];
-
-        const length = getArrayLength(array, "test");
-
-        assert.strictEqual(3, length);
-    });
-
-    test("undefined has length 0", () => {
-        const length = getArrayLength(undefined, "test");
-
-        assert.strictEqual(0, length);
-    });
-
-    test("throws if not array or undefined", async t => {
-        const values = [
-            {},
-            BigInt(0),
-            Symbol(0),
-            "",
-            0,
-            false,
-            null,
-            () => {}
-        ];
-
-        for (let i = 0; i < values.length; i++) {
-            const value = values[i];
-
-            const testDescription = value === null 
-                ? "typeof null"
-                : `typeof ${getTypeof(value)}`;
-
-            await t.test(testDescription, () => {
-                // @ts-ignore, we are intentionally providing wrong type
-                assert.throws(() => getArrayLength(value));
-            });
-        }
-    });
-});
-
 describe("checkReceiver", () => {
     test("a proper receiver does not throw", () => {
         /** @type {import("../../../public-types.js").Receiver} */
@@ -185,7 +142,7 @@ describe("checkReceiver", () => {
 });
 
 describe("checkRequestors", () => {
-    test("array of proper requestors is good", () => {
+    test("array of proper requestors is does not throw", () => {
         /** @type {import("../../../public-types.js").Requestor[]} */
         const requestors = [
             receiver => console.log(receiver),

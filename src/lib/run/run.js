@@ -49,7 +49,6 @@ export function run(spec) {
 
     /** @type {Array<import("../../../public-types.js").Cancellor|void>|undefined} */
     let cancellors = new Array(requestors.length);
-
     let nextIndex = 0;
 
     /** @type {number|undefined} */
@@ -86,14 +85,15 @@ export function run(spec) {
 
         const requestor = requestors[requestorIndex];
         try {
+
             const cancellor = requestor(
                 ({ value, reason }) => {
+
                     if (cancellors === undefined 
                         || requestorIndex === undefined) 
                         return;
-                    
-                    // We no longer need the cancel function associated with 
-                    // this requestor 
+
+                    // We no longer need the associated cancellor.
                     cancellors[requestorIndex] = undefined;
 
                     // Allow caller to inject behavior
@@ -122,8 +122,9 @@ export function run(spec) {
                 },
                 message
             );
-
-            cancellors[requestorIndex] = cancellor;
+            
+            if (requestorIndex !== undefined)
+                cancellors[requestorIndex] = cancellor;
         }
         catch(reason) {
             // Requestors must handle errors themselves. That is, a proper 
