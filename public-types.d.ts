@@ -19,6 +19,12 @@ export interface ParallelSpec {
     [__factoryName__]?: string
 }
 
+export interface RaceSpec {
+    timeLimit?: number,
+    throttle?: number,
+    [__factoryName__]?: string
+}
+
 export namespace parsec {
 
 }
