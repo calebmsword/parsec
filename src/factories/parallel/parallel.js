@@ -13,55 +13,10 @@ import { run } from "../../lib/run/run.js";
 
 /**
  * Creates a requestor which executes multiple requestors concurrently.
- * 
- * @example
- * ```
- * import parsec from "./parsec";
- * import { createFetchRequestor } from "./example-utils";
- * 
- * const cheeseRequestor = createFetchRequestor("https://cheese.com/api/cheeses");
- * const beerRequestor = createFetchRequestor("https://beer.com/api/beers");
- * 
- * const cheeseAndBeerRequestor = parsec.parallel(
- *     [cheeseRequestor, beerRequestor]
- * );
- * 
- * // make request
- * cheeseAndBeerRequestor(({ value, reason }) => {
- *     if (value === undefined) {
- *         console.log("Failure because", reason);
- *         return;
- *     }
- *     
- *     const [cheeseResult, beerResult] = value;
- *     console.log("All cheeses:", cheeseResult, "All beers:", beerResult);
- * });
- * ```
- * 
- * The result for each parallelized requestor is stored in an array. If the 
- * requestor created by this factory succeeds, then the receiver response will 
- * contain the array.
- * 
- * This is not parallelism in the JavaScript. We are giving the server (or 
- * whatever the recepient of the requestor may be) an opportunity to handle the 
- * requests in parallel if it has the capacity to do so.
- * 
- * A throttle can be used if the server can only handle so many simultaneous 
- * requests.
- * 
- * The user can provide a second array of optional requestors. By default, any 
- * optional requestors which have not been executed once every necessary 
- * requestor has completed are not fired; any which have not yet finished will 
- * be canceled if possible. This behavior can be configured with 
- * `spec.timeOption`. See the documentation for the `TimeOption` object.
- * 
- * A time limit can be provided. The requestor returned by `parallel` fails if 
- * the time limit is reached before every necessary requestor completes.
- * 
  * @param {import("../../../public-types").Requestor[]|import("../../../public-types").ParallelSpec} necessetiesOrSpec 
- * If an array, then the argument is an array of requestors. The requestor fails if any of these requestors fail. If 
- * this argument is an object, then it replaces the `spec` parameter and any 
- * additional arguments will be ignored.
+ * If an array, then the argument is an array of requestors. The requestor fails 
+ * if any of these requestors fail. If this argument is an object, then it 
+ * replaces the `spec` parameter and any additional arguments will be ignored.
  * @param {object} [spec] 
  * Configures parallel.
  * @param {import("../../../public-types").Requestor[]} [spec.optionals] 
@@ -70,18 +25,17 @@ import { run } from "../../lib/run/run.js";
  * property changes how `parallel` handles optionals if a `timeLimit` is 
  * provided.
  * @param {number} [spec.timeLimit]
- * Optional. A timeout in milliseconds. Failure 
- * occurs if the required requestors are not all complete before this time limit.
+ * Optional. A timeout in milliseconds. Failure occurs if the required 
+ * requestors are not all complete before this time limit.
  * @param {string} [spec.timeOption]
- *  Determines how the optional requestors are 
- * handled when the required requestors are all complete. See the documentation 
- * for the `TimeOption` object.
+ * Determines how the optional requestors are handled when the required 
+ * requestors are all complete. See the documentation for the `TimeOption` 
+ * object.
  * @param {number} [spec.throttle]
- * The number of requestors which can be 
- * simultaneously handled by the server. A throttle of 0 indicates no throttle.
+ * The number of requestors which can be simultaneously handled by the server. A 
+ * throttle of 0 indicates no throttle.
  * @returns {import("../../../public-types").Requestor} 
- * Requestor which calls the array of requestors in 
- * "parallel".
+ * Requestor which calls the array of requestors concurrently.
  */
 export function parallel(necessetiesOrSpec, spec = {}) {
     /** @type {import("../../../public-types.js").Requestor[]} */

@@ -8,33 +8,7 @@ import { run } from "../../lib/run/run.js";
 
 /**
  * Creates a requestor which succeeds when any of its requestors succeeds.
- * 
- * @example
- * ```
- * import parsec from "./parsec";
- * import { createFetchRequestor } from "./example-utils";
- * 
- * const gruyereRequestor = createFetchRequestor("https://cheese.com/api/cheeses/gruyere");
- * const cheddarRequestor = createFetchRequestor("https://cheese.com/api/cheeses/cheddar");
- * const americanRequestor = createFetchRequestor("https://cheese.com/api/cheeses/american");
- * 
- * const cheeseRequestor = parsec.race(
- *  [gruyereRequestor, cheddarRequestor, americanRequestor]
- * );
- * 
- * // make request
- * cheeseRequestor(({ value, reason }) => {
- *     if (value === undefined) {
- *         console.log("In error state! " + reason ? `Because: ${reason}` : "");
- *         return;
- *     }
- *     
- *     console.log("Here's the cheese:", value);
- * });
- * ```
- * 
  * There is only failure if every requestor fails.
- * 
  * @param {import("../../../public-types").Requestor[]} requestors 
  * An array of requestors.
  * @param {object} [spec={}] 
@@ -42,8 +16,7 @@ import { run } from "../../lib/run/run.js";
  * @param {number} [spec.timeLimit]
  * A time limit in milliseconds.
  * @param {number} [spec.throttle]
- * Limits the number of requestors executed in a 
- * tick.
+ * Limits the number of requestors executed in a tick.
  * @returns {import("../../../public-types").Requestor} 
  * A requestor. Calling this method starts the race.
  */
