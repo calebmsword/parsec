@@ -244,7 +244,7 @@ First instal [git](https://git-scm.com/downloads). Once you have git, execute `g
 This repository uses type annotations in JSDoc to add type-checking to JavaScript. While this requires the `typescript` package, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then execute `npx tsc` in the repository).
 
 ### Testing
-Execute `npm test` to run all tests. If you are using Node v20.1.0 or higher, execute `npm test-coverage` to see coverage results.
+Execute `npm test` to run all tests. If you are using Node v20.1.0 or higher, execute `npm run test-coverage` to see coverage results.
 
 ### Contribution Guidelines
  - If you notice a bug or have a feature request, please raise an issue. Follow the default template provided for bug reports or feature requests, respectively.

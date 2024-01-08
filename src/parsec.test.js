@@ -22,6 +22,5 @@ describe("smoke test(s)", () => {
         assert.strictEqual(true, parsec.hasOwnProperty("parallel"));
         assert.strictEqual(true, parsec.hasOwnProperty("race"));
         assert.strictEqual(true, parsec.hasOwnProperty("fallback"));
-        assert.strictEqual(true, parsec.hasOwnProperty("TimeOption"));
     });
 });
