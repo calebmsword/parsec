@@ -22,15 +22,15 @@ This library is based off the library "Parseq" by Douglas Crockford from his boo
 ### Requestors 
 In Parsec, the building block of asynchronous logic is a kind of function we call a **requestor**. A requestor performs *one unit of work*. This unit of work can be synchronous or asynchronous.
 
-Requestors receive a callback that is called when the unit of work completes. We call these callbacks **receivers**. All receivers take exactly one argument: a *result* object. 
+Requestors receive a callback that is called when the unit of work completes. We call these callbacks **receivers**. All receivers take exactly one argument: a **result** object. 
 
 The result may have a `value` property which represents the result of that unit of work. If the unit of work resulted in failure, then the value is `undefined`. On failure, the result may optionally contain a `reason` property which can be used for logging purposes.
 
-A requestor may take a second argument we call a *message*.
+A requestor may take a second argument we call a **message**.
 
-Requestors may optionally return a function we call a **cancellor**. The cancellor should attempt to cancel the unit of work its requestor started, and may optionally take a *reason* argument for logging purposes. In general, cancellors cannot guarantee cancellation. They can only guarantee an attempt.
+Requestors may optionally return a function we call a **cancellor**. The cancellor should attempt to cancel the unit of work its requestor started and may optionally take a *reason* argument for logging purposes. In general, cancellors cannot guarantee cancellation. They can only guarantee an attempt.
 
-Here is an example of a requestor which makes HTTP requests:
+Here is an example of a requestor which makes HTTP/HTTPS requests:
 
 ```javascript
 // most of the time, you create factories which create your requestors
@@ -150,13 +150,13 @@ Each factory in parsec returns a new requestor meaning that the factories can be
 Each factory returns a requestor which returns a cancellor, meaning the requests can be easily cancelled.
 
 ### Why should I use Parsec?
-Using Parsec and requestors, we have clear separation of logic and control flow for asynchronous code. This is something that Promises and async-await fail to do. Simple features like throttling the number of concurrent requests to a server or cancelling a remote request, things which are inconvenient with Promises or async-await, are trivial with Parsec. Finally, the library is small and has no dependencies.
+Using requestors and Parsec, we have clear separation of logic (requestors) and control flow (Parsec) for asynchronous code. This is something that Promises and async-await fail to do. Simple features like throttling the number of concurrent requests to a server or cancelling a remote request, things which are inconvenient with Promises or async-await, are trivial with Parsec. Finally, the library is small and has no dependencies.
 
 ### Nebula
 
 To simply usage of Parsec, a collection of useful requestor factories is included in the sister package [Nebula](https://github.com/calebmsword/nebula). 
 
-Many of the factories in Nebula create requestors for making HTTP requests.
+Many of the factories in Nebula create requestors for making HTTP/HTTPS requests.
 
 ```javascript
 import nebula from "./nebula.js";
@@ -184,9 +184,7 @@ We can use `parsec.sequence` and `nebula` to create a requestor which requests d
 
 ```javascript
 import parsec from "cms-parsec";
-import nebula from "cms-nebula";
-
-const { get, post, map } = nebula;
+import { get, map, post } from "cms-nebula";
 
 const saveCoffeeToDatabase = parsec.sequence([
     get("https://api.sampleapis.com/coffee/hot"),
@@ -199,7 +197,7 @@ const saveCoffeeToDatabase = parsec.sequence([
 ]);
 ```
 
-Requestors and Parsec is a more robust toolset for asynchronous code management than Promises and async-await. However, many useful libraries return Promises, so Nebula provides a mechanism for integrating them into Parsec.
+Requestors and Parsec is a more robust toolset for asynchronous code management than Promises and async-await. However, since many useful libraries return Promises, Nebula provides a mechanism for integrating them into Parsec.
 
 ```javascript
 const coffeePromise = fetch("https://api.sampleapis.com/coffee/hot")
@@ -241,7 +239,7 @@ This package includes types for all of the requestor factories in Parsec. In add
 First instal [git](https://git-scm.com/downloads). Once you have git, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code. Then execute `npm install`.
 
 ### TypeScript & JSDoc
-This repository uses type annotations in JSDoc to add type-checking to JavaScript. While this requires the `typescript` package, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then execute `npx tsc` in the repository).
+This repository uses type annotations in JSDoc to add type-checking to JavaScript. While this requires the `typescript` package, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (execute `npx tsc` in the repository).
 
 ### Testing
 Execute `npm test` to run all tests. If you are using Node v20.1.0 or higher, execute `npm run test-coverage` to see coverage results.

@@ -9,9 +9,9 @@ export const FactoryName = Object.freeze({
  * Determines how the optional requestors are handled in `parallel`.
  * There are three keys in TimeOption:
  * 
- *  - `"SKIP_OPTIONALS_IF_TIME_REMAINS"`: The optional requestors must finish 
- * before the required requestors finish. The required requestors must finish 
- * before the time limit, if there is one.
+ *  - `"SKIP_OPTIONALS_IF_TIME_REMAINS"`: Any optionals which have not yet 
+ * finished by the time the required requestors finish are discarded. The 
+ * required requestors must finish before the time limit, if there is one.
  *  - `"TRY_OPTIONALS_IF_TIME_REMAINS"`: The required requestors and the 
  * optional requestors must all finish before the time limit.
  *  - `"REQUIRE_NECESSITIES"`: The required requestors have no time limit. The 

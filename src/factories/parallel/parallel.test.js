@@ -361,10 +361,7 @@ describe("necessities, optionals, & timeOption", () => {
         const cancelled = [];
         
         parallel([
-            receiver => receiver({ value: "value" }),
-            reciever => { 
-                setTimeout(() => reciever({ value: "value" }));
-            }
+            receiver => receiver({ value: "value" })
         ], {
             optionals: [
                 receiver => {

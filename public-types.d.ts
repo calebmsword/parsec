@@ -41,7 +41,7 @@ declare module "cms-parsec" {
     /**
      * Calls requestors in order, passing results from the previous to the next.
      * 
-     * For HTTP requests, it is convenient to use nebula.
+     * For HTTP/HTTPS requests, it is convenient to use nebula.
      * 
      * @example
      * ```
@@ -73,7 +73,7 @@ declare module "cms-parsec" {
      * ```
      * import parsec from "cms-parsec";
      * 
-     * const mySequenceRequestor = parsec.parallel([
+     * const mySequenceRequestor = parsec.sequence([
      *     (receiver, message) => {
      *         // gets intial message, passes along 
      *         // new message through value
@@ -94,13 +94,13 @@ declare module "cms-parsec" {
      * ```
      * 
      * Important details:
-     *  - Each requestor is called **asycnhronously**, even if the requestor 
-     * itself is fully synchronous.
      *  - Success occurs when every requestor succeeds. If any failure occurs in 
      * some requestor or the optional time limit is reached before the sequence 
      * ends, the sequence fails.
      *  - The requestor returned by `parallel` has a cancellor. It calls the 
      * cancellors for any pending requestors in the sequence.
+     *  - Each requestor is called **asycnhronously**, even if the requestor 
+     * itself is fully synchronous.
      * @param {import("../../../public-types").Requestor[]} requestors 
      * An array of requestors.
      * @param {object} [spec={}] 
@@ -144,14 +144,14 @@ declare module "cms-parsec" {
      * });
      * ```
      * 
-     * The result for each parallelized requestor is stored in an array. If the 
-     * requestor created by this factory succeeds, then the receiver response 
-     * will contain the array. The order of results corresponds to the order of 
-     * requestors in the provided argument array.
-     * 
      * This is not parallelism in the JavaScript. We are giving the server an 
      * opportunity to handle the requests in parallel if it has the capacity to 
      * do so.
+     * 
+     * The result for each parallelized requestor is stored in an array. If the 
+     * requestor created by this factory succeeds, then the receiver response 
+     * will contain the array. The order of results corresponds to the order of 
+     * the provided requestors.
      * 
      * A throttle can be used if the server can only handle so many simultaneous 
      * requests.
@@ -196,7 +196,9 @@ declare module "cms-parsec" {
     ) : Requestor;
 
     /**
-     * Creates a requestor which succeeds when any of its requestors succeeds.
+     * Runs multiple requestors concurrently but only succeeds with one value.
+     * The first requestor to call its receiver in a success state causes that 
+     * value to be the result of the requestor returned by this factory.
      * 
      * @example
      * ```
