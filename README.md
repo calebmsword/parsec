@@ -1,8 +1,6 @@
 # Parsec
 Parsec is a robust functional solution to asynchronous code management in JavaScript.
 
-This package is exported as an ES6 module.
-
 This package is compatible with TypeScript. Please see [this section](#parsec--typescript) for more information.
 
 # Acknowledgement
@@ -39,7 +37,7 @@ Here is an example of a requestor which makes HTTP requests:
 function createGetRequestor(url) {
 
     // this specific requestor does not take a message
-    return (receiver) => {
+    return receiver => {
         try {
             const request = new XMLHttpRequest();
 
@@ -75,13 +73,13 @@ function createGetRequestor(url) {
 const getCoffees = createGetRequestor("https://api.sampleapis.com/coffee/hot");
 
 // use the requestor
-getCoffees((result) => {
-    if (result.value === undefined) {
+getCoffees(({ value, reason }) => {
+    if (value === undefined) {
         console.log("Failure:", reason);
         return;
     }
 
-    console.log("Success! Response is:\n", result.value.data);
+    console.log("Success! Response is:\n", value.data);
 });
 ```
 
@@ -98,7 +96,7 @@ let getNav = parsec.sequence([
 ]);
 ```
 
-`parsec.sequence` is the most useful Parsec factory. Its usage is fully analagous to Promise chains or async-await and it also comes with more robust and convenient handling of time limits and cancellation.
+`parsec.sequence` is the most useful Parsec factory. Its usage is fully analagous to Promise chains or async-await.
 
  - `parsec.parallel` creates a requestor which concurrently executes a collection of other requestors.
 
@@ -156,7 +154,7 @@ Using Parsec and requestors, we have clear separation of logic and control flow 
 
 ### Nebula
 
-To simply usage of Parsec, a collection of useful requestor factories is included in the sister package (Nebula)[https://github.com/calebmsword/nebula]. 
+To simply usage of Parsec, a collection of useful requestor factories is included in the sister package [Nebula](https://github.com/calebmsword/nebula). 
 
 Many of the factories in Nebula create requestors for making HTTP requests.
 
@@ -227,7 +225,7 @@ const cancel = fetchCoffees(result => {
 Keep in mind that Parsec should be used as the "next step" in asychronous code management. Any time you use `usePromise`, first consider creating an alternative implementation of that Promise as a requestor.
 
 ## Parsec & TypeScript
-The following types can be imported from `cms-parsec`:
+This package includes types for all of the requestor factories in Parsec. In addition, the following types can be imported from `cms-parsec`:
  - `Requestor`: The signature of functions which can act as requestors.
  - `Receiver`: The signature of functions which can act as receivers.
  - `Result`: The type of the single argument consumed by receivers.
@@ -236,6 +234,26 @@ The following types can be imported from `cms-parsec`:
  - `ParallelSpec`: The type of the spec object which can be passed to `parsec.parallel`.
  - `RaceSpace`: The type of the spec object which can be passed to `parsec.race`.
  - `FallbackSpec`: The type of the spec object which can be passed to `parsec.fallback`.
+
+## Contributing
+
+### Cloning the repository
+First instal [git](https://git-scm.com/downloads). Once you have git, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code. Then execute `npm install`.
+
+### TypeScript & JSDoc
+This repository uses type annotations in JSDoc to add type-checking to JavaScript. While this requires the `typescript` package, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then execute `npx tsc` in the repository).
+
+### Testing
+Execute `npm test` to run all tests. If you are using Node v20.1.0 or higher, execute `npm test-coverage` to see coverage results.
+
+### Contribution Guidelines
+ - If you notice a bug or have a feature request, please raise an issue. Follow the default template provided for bug reports or feature requests, respectively.
+ - If you would like to implement a bug fix or feature request from an issue please:
+   - Create a branch from the dev branch with a descriptive name relevant to the issue title
+   - Implement the feature/bug fix
+   - Add JSDoc annotations. Avoid reckless usage of the `any` type. New types can be introduced to `private-types.d.ts`, unless you would like that type to be exposed to the user in which it should be included in `public-types.d.ts`.
+   - Create tests for all of the new code. Reach 100% line and function coverage and do your best to reach 100% branch coverage.
+   - Once you are finished with the implementation and tests, create a pull request to the dev branch. All PRs to the `dev` or `main` branches require approval from the [repository owner](https://github.com/calebmsword) to be merged.
 
 ### More acknowledgements
  - Thanks to Douglas Crockford for freely sharing the Parseq source code.
