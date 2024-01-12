@@ -29,7 +29,7 @@ export function makeReason(spec) {
 
 /**
  * Throws if the provided callback is not a proper receiver.
- * @param {import("../../../public-types").Receiver} receiver 
+ * @param {import("../../../public-types").Receiver<any>} receiver 
  * @param {string} factoryName 
  * @returns {void} 
  */
@@ -43,7 +43,7 @@ export function checkReceiver(receiver, factoryName) {
 
 /**
  * Checks if provided value is an array of proper requestors.
- * @param {import("../../../public-types").Requestor[]} requestors 
+ * @param {import("../../../public-types").Requestor<any>[]} requestors 
  * @param {String} factoryName 
  */
 export function checkRequestors(requestors, factoryName) {

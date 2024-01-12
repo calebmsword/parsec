@@ -9,7 +9,12 @@ import { run } from "../../lib/run/run.js";
 /**
  * Creates a requestor which succeeds when any of its requestors succeeds.
  * There is only failure if every requestor fails.
- * @param {import("../../../public-types").Requestor[]} requestors 
+ * 
+ * @template T 
+ * 
+ * @template M
+ * 
+ * @param {import("../../../public-types").Requestor<T, M>[]} requestors 
  * An array of requestors.
  * @param {object} [spec={}] 
  * Configures race.
@@ -17,7 +22,7 @@ import { run } from "../../lib/run/run.js";
  * A time limit in milliseconds.
  * @param {number} [spec.throttle]
  * Limits the number of requestors executed in a tick.
- * @returns {import("../../../public-types").Requestor} 
+ * @returns {import("../../../public-types").Requestor<T, M>} 
  * A requestor. Calling this method starts the race.
  */
 export function race(requestors, spec = {}) {

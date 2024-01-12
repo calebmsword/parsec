@@ -91,7 +91,7 @@ describe("makeReason", () => {
 
 describe("checkReceiver", () => {
     test("a proper receiver does not throw", () => {
-        /** @type {import("../../../public-types.js").Receiver} */
+        /** @type {import("../../../public-types.js").Receiver<any>} */
         const receiver = ({ value, reason }) => console.log(value, reason);
 
         checkReceiver(receiver, "test");
@@ -143,7 +143,7 @@ describe("checkReceiver", () => {
 
 describe("checkRequestors", () => {
     test("array of proper requestors is does not throw", () => {
-        /** @type {import("../../../public-types.js").Requestor[]} */
+        /** @type {import("../../../public-types.js").Requestor<never>[]} */
         const requestors = [
             receiver => console.log(receiver),
             (receiver, message) => console.log(receiver, message)

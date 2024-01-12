@@ -42,7 +42,7 @@ describe("race requestors", () => {
         /**
          * @param {any} value 
          * @param {number} t 
-         * @returns {import("../../../public-types").Requestor}
+         * @returns {import("../../../public-types").Requestor<number>}
          */
         const getRequestor = (value, t) => receiver => {
             setTimeout(() => receiver({ value }), t);
@@ -69,7 +69,7 @@ describe("race requestors", () => {
         /**
          * @param {any} value 
          * @param {number} t 
-         * @returns {import("../../../public-types").Requestor}
+         * @returns {import("../../../public-types").Requestor<number>}
          */
         const getRequestor = (value, t) => receiver => {
             setTimeout(() => receiver({ value }), t);
@@ -115,7 +115,7 @@ describe("race requestors", () => {
         /**
          * @param {number} value 
          * @param {number} t 
-         * @returns {import("../../../public-types").Requestor}
+         * @returns {import("../../../public-types").Requestor<number>}
          */
         const getRequestor = (value, t) => receiver => {
             setTimeout(() => receiver({ value }), t);

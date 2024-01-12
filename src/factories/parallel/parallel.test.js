@@ -83,7 +83,7 @@ describe("arguments", () => {
 
 describe("action", () => {
     test("the result only fails if a necessity fails", () => {
-        /** @type {import("../../../public-types").Requestor} */
+        /** @type {import("../../../public-types").Requestor<{}>} */
         const failingRequestor = receiver => receiver({});
 
         parallel([failingRequestor])(({ value }) => {
@@ -123,7 +123,7 @@ describe("necessities, optionals, & timeOption", () => {
 
         /**
          * @param {number} n 
-         * @returns {import("../../../public-types").Requestor}
+         * @returns {import("../../../public-types").Requestor<number>}
          */
         const getRequestor = n => receiver => {
             result.push(n);
@@ -152,7 +152,7 @@ describe("necessities, optionals, & timeOption", () => {
         /**
          * @param {number} t 
          * @param {number} n 
-         * @returns {import("../../../public-types").Requestor} 
+         * @returns {import("../../../public-types").Requestor<never>} 
          */
         const getDelayedRequestor = (n, t) => receiver => {
             setTimeout(() => result.push(n), t);
@@ -183,7 +183,7 @@ describe("necessities, optionals, & timeOption", () => {
         /**
          * @param {number} t 
          * @param {number} n 
-         * @returns {import("../../../public-types").Requestor} 
+         * @returns {import("../../../public-types").Requestor<string>} 
          */
         const getDelayedRequestor = (n, t) => receiver => {
             setTimeout(() => {
@@ -213,7 +213,7 @@ describe("necessities, optionals, & timeOption", () => {
         /**
          * @param {number} t 
          * @param {number} n 
-         * @returns {import("../../../public-types").Requestor} 
+         * @returns {import("../../../public-types").Requestor<string>} 
          */
         const getDelayedRequestor = (n, t) => receiver => {
             setTimeout(() => receiver({ value: "value" }), t);
@@ -434,12 +434,12 @@ describe("misc", () => {
         });
         mock.timers.tick(0);
 
-        parallel([], {
+        parallel({
             // @ts-ignore, undocumented internal parameter
             [__factoryName__]: FactoryName.SEQUENCE,
         })(({ value }) => {
-            assert.strictEqual("initialMessage", value);
-        }, "initialMessage");
+            assert.strictEqual(undefined, value);
+        });
         mock.timers.tick(0);
     });
 
@@ -477,6 +477,53 @@ describe("misc", () => {
             assert.strictEqual("02", value);
         });
         mock.timers.tick(0);
+    });
+
+    test("if sequence factory, result is only the last requestor " + 
+         "result", () => {
+        
+        parallel([
+            receiver => receiver({ value: "01" }),
+            receiver => receiver({ value: "02" })
+        ], {
+            // @ts-ignore, undocumented secret property
+            [__factoryName__]: FactoryName.SEQUENCE,
+            throttle: 1
+        })(({ value }) => {
+            assert.strictEqual("02", value);
+        });
+        mock.timers.tick(0);
+    });
+
+    test("if sequence factory and results.pop returns undefined, result, " + 
+         "receiver gets a Failure", () => {
+        
+        const ArrayDotPop = Array.prototype.pop;
+
+        try {
+            Array.prototype.pop = () => undefined;
+
+            parallel([
+                receiver => receiver({ value: "01" }),
+                receiver => receiver({ value: "02" })
+            ], {
+                // @ts-ignore, undocumented secret property
+                [__factoryName__]: FactoryName.SEQUENCE,
+                throttle: 1
+            })(({ value, reason }) => {
+                Array.prototype.pop = ArrayDotPop;
+                assert.strictEqual(undefined, value);
+                assert.strictEqual(true, 
+                                   reason
+                                    .message
+                                    .includes("No requestors provided"));
+            });
+            mock.timers.tick(0);
+        }
+        catch(error) {
+            Array.prototype.pop = ArrayDotPop;
+            throw error;
+        }
     });
 
     test("empty arrays and undefined are treated equivalently", async t => {

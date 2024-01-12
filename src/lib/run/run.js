@@ -3,14 +3,19 @@ import { makeReason } from "../utils/utils.js";
 
 /**
  * Launches requestors and manages timing, cancellation, and throttling.
- *`run` is the most important function is Parsec.
+ * `run` is the most important function is Parsec.
+ *
+ * @template T 
+ * 
+ * @template [M=any] 
+ * 
  * @param {object} spec 
  * Configures run.
  * @param {string} spec.factoryName 
  * The name of the requestor factory which called `run`.
- * @param {import("../../../public-types.js").Requestor[]} spec.requestors 
+ * @param {import("../../../public-types.js").Requestor<T, M>[]} spec.requestors 
  * An array of requestor functions.
- * @param {import("../../../private-types.js").Action} spec.action 
+ * @param {import("../../../private-types.js").Action<T>} spec.action 
  * The action callback. It receives an object with `"value"`, `"reason"`, and 
  * `"requestorIndex"` keys. The action method is executed in the receiver for 
  * each requestor in `spec.requestors`. The caller can inject specific behavior 
@@ -47,7 +52,7 @@ export function run(spec) {
         throttle = 0
     } = spec;
 
-    /** @type {Array<import("../../../public-types.js").Cancellor|void>|undefined} */
+    /** @type {Array<import("../../../public-types").Cancellor|void>|undefined} */
     let cancellors = new Array(requestors.length);
     let nextIndex = 0;
 

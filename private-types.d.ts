@@ -1,5 +1,5 @@
-export interface ActionSpec {
-    value?: any,
+export interface ActionSpec<T> {
+    value?: T,
     reason?: any,
     requestorIndex: number
 }
@@ -10,4 +10,4 @@ export interface Reason extends Error {
     cause?: any
 }
 
-export type Action = (spec: ActionSpec) => void;
+export type Action<T> = (spec: ActionSpec<T>) => void;

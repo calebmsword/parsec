@@ -2,23 +2,80 @@ import parsec, { TimeOption } from "./src/parsec.js";
 
 import { __factoryName__ } from "./src/lib/constants";
 
-export interface Result {
-    value?: any,
+/**
+ * How the result of a requestor's unit of work is represented.
+ * @Template T
+ * The type of the `value` property will have if the Result is successful. If 
+ * no type is provided, then `T` will be `any`.
+ */
+export interface Result<T> {
+    value?: T,
     reason?: any
 }
 
+/**
+ * Represents the result of a requestor whose unit of work resulted in success.
+ * This is a specific type of {@link Result}.
+ * @template T
+ * The type of the `value` property in the {@link Result} object. 
+ */
+export type Success<T extends number|string|boolean|object|symbol|bigint|null> = 
+    Result<T>
+
+/**
+ * Represents a requestor whose unit of work resulted in failure.
+ * This is a specific type of {@link Result}.
+ */
+export type Failure = Result<undefined>;
+
+/**
+ * A function which should cancel the work associated with a requestor.
+ * Many requestors make some request to a remote server, so a `Cancellor` cannot 
+ * guarantee that the cancellation will occur. It can only guarantee an attempt.
+ * @param {any} [reason]
+ * An optional `reason` which can be provided to the `Cancellor`.
+ */
 export type Cancellor = (reason?: any) => void;
 
-export type Receiver = (result: Result) => void;
+/**
+ * A callback that is executed when a requestor completes its work.
+ * @template T
+ * The type of the `value` property of the result if the requestor is 
+ * successful.
+ * @param {Success|Failure} result
+ * The result of the requestor's work.
+ */
+export type Receiver<T> = (result: Result<T>) => void;
 
-export type Requestor = (receiver: Receiver, message?: any) => Cancellor|void;
+/**
+ * Requestors are the building blocks of asynchronous logic in Parsec.
+ * Requestors are functions which perform "one unit of work". This work is 
+ * typically asynchronous, but it can be synchronous. Upon completion, the 
+ * requestor should call its {@link Receiver} with a {@link Success} or 
+ * {@link Failure}. Requestors may optionally receive a `message` which is a 
+ * second argument to the function.
+ * Requestors may optionally return a {@link Cancellor}.
+ * @template T
+ * The type of the `value` parameter in the Result passed to the receiver.
+ * @template M
+ * The type of the message which can be passed to the requestor. If not 
+ * provided, the message can be `any`.
+ * @param {Receiver<S>} receiver
+ * A callback which is executed with the {@link Result} of the requestor's unit 
+ * of work.
+ * @param {M} [message]
+ * Can be used to configure the requestor call. Can be used in `parsec.sequence` 
+ * to allow distributed message passing between `Requestor`s.
+ */
+export type Requestor<T, M = any> =
+    (receiver: Receiver<T>, message?: M) => Cancellor|void;
 
 export interface SequenceSpec {
     timeLimit?: number
 }
 
-export interface ParallelSpec {
-    optionals?: Requestor[],
+export interface ParallelSpec<T, M> {
+    optionals?: Requestor<T, M>[],
     timeLimit?: number,
     timeOption?: string,
     throttle?: number,
@@ -101,6 +158,15 @@ declare module "cms-parsec" {
      * cancellors for any pending requestors in the sequence.
      *  - Each requestor is called **asycnhronously**, even if the requestor 
      * itself is fully synchronous.
+     * @template T
+     * The type of the `value` property each {@link Requestor} can have in its 
+     * sucessful {@link Result}.
+     * @template U
+     * The type of `value` property in the {@link Result} for the requestor 
+     * returned by this factory.
+     * @template M
+     * The type of the initial message for the requestor returned by this 
+     * factory.
      * @param {import("../../../public-types").Requestor[]} requestors 
      * An array of requestors.
      * @param {object} [spec={}] 
@@ -110,10 +176,10 @@ declare module "cms-parsec" {
      * @returns {import("../../../public-types").Requestor} 
      * The sequence requestor. Upon execution, starts the sequence.
      */
-    export function sequence(
-        requestors: Requestor[], 
+    export function sequence<T, U, M = any>(
+        requestors: [Requestor<T, M>, ...Requestor<T>[], Requestor<U>], 
         spec: SequenceSpec
-    ) : Requestor;
+    ) : Requestor<U, M>;
     
     /**
      * Creates a requestor which executes multiple requestors concurrently.
@@ -165,6 +231,13 @@ declare module "cms-parsec" {
      * A time limit can be provided. The requestor returned by `parallel` fails 
      * if the time limit is reached before every necessary requestor completes.
      * 
+     * @template T
+     * The type of the `value` property in the {@link Result} for each 
+     * provided requestor.
+     * @template M
+     * The type of the message which can be passed to the requestor returned by 
+     * this factory.
+     * 
      * @param {import("../../../public-types").Requestor[]|import("../../../public-types").ParallelSpec} necessetiesOrSpec 
      * If an array, then the argument is an array of requestors. The requestor 
      * fails if any of these requestors fail. If this argument is an object, 
@@ -190,10 +263,10 @@ declare module "cms-parsec" {
      * @returns {import("../../../public-types").Requestor} 
      * Requestor which executes a collection of requestors concurrently.
      */
-    export function parallel(
-        necessetiesOrSpec: Requestor[],
-        spec: ParallelSpec
-    ) : Requestor;
+    export function parallel<T, M = any>(
+        necessetiesOrSpec: Requestor<T, M>[],
+        spec: ParallelSpec<T, M>
+    ) : Requestor<T[], M>;
 
     /**
      * Runs multiple requestors concurrently but only succeeds with one value.
@@ -224,7 +297,15 @@ declare module "cms-parsec" {
      * 
      * There is only failure if every requestor fails.
      * 
-     * @param {import("../../../public-types").Requestor[]} requestors 
+     * @template T 
+     * The type of the `value` property which can be in the {@link Result} of 
+     * any provided {@link Requestor}.
+     * @template M 
+     * The message which can be passed to the requestor returned by this 
+     * factory. Each of the provided requestors will be called with this 
+     * message.
+     * 
+     * @param {import("../../../public-types").Requestor<any, any>[]} requestors 
      * An array of requestors.
      * @param {object} [spec={}] 
      * Configures race.
@@ -232,13 +313,13 @@ declare module "cms-parsec" {
      * A time limit in milliseconds.
      * @param {number} [spec.throttle]
      * Limits the number of requestors executed in a tick.
-     * @returns {import("../../../public-types").Requestor} 
+     * @returns {import("../../../public-types").Requestor<any, any>} 
      * A requestor. Calling this method starts the race.
      */
-    export function race(
-        requestors: Requestor[],
+    export function race<T, M = any>(
+        requestors: Requestor<T, M>[],
         spec: RaceSpec
-    ) : Requestor;
+    ) : Requestor<T, M>;
     
     /**
      * Perform each requestor one at a time until one succeeds.
@@ -268,6 +349,13 @@ declare module "cms-parsec" {
      * Failure occurs only when all of the provided requestors fail. An optional 
      * time limit can be provided. If so, then failure occurs if the time limit 
      * is reached before any requestor succeeds.
+     * 
+     * @template T 
+     * The type of the `value` property any provided requestor can have in its 
+     * result.
+     * @template M 
+     * The type of message passed to each requestor.
+     * 
      * @param {import("../../../public-types").Requestor[]} requestors 
      * An array of requestors.
      * @param {object} [spec={}] 
@@ -277,13 +365,11 @@ declare module "cms-parsec" {
      * @returns {import("../../../public-types.js").Requestor} 
      * A requestor function. Upon execution, starts the fallback request.
      */
-    export function fallback(
-        requestors: Requestor[],
+    export function fallback<T, M>(
+        requestors: Requestor<T, M>[],
         spec: FallbackSpec
-    ) : Requestor;
+    ) : Requestor<T, M>;
     
-    /**
-     * Does this work?
-     */
+    
     export { TimeOption };
 }

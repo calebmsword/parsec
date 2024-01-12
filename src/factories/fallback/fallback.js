@@ -31,13 +31,13 @@ import { race } from "../race/race.js";
  * Failure occurs only when all of the provided requestors fail. An optional 
  * time limit can be provided. If so, then failure occurs if the time limit is 
  * reached before any requestor succeeds.
- * @param {import("../../../public-types").Requestor[]} requestors 
+ * @param {import("../../../public-types").Requestor<any, any>[]} requestors 
  * An array of requestors.
  * @param {object} [spec={}] 
  * Configures fallback.
  * @param {number} [spec.timeLimit] 
  * An optional time limit.
- * @returns {import("../../../public-types.js").Requestor} 
+ * @returns {import("../../../public-types.js").Requestor<any, any>} 
  * A requestor function. Upon execution, starts the fallback 
  * request.
  */

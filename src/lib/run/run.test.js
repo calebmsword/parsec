@@ -160,12 +160,12 @@ describe("requestors", () => {
     test("all requestors are executed", () => {
         const requestorStore = [];
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<never>} */
         const requestor01 = receiver => {
             requestorStore.push(0);
         }
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<never>} */
         const requestor02 = receiver => {
             requestorStore.push(0);
         }
@@ -183,7 +183,7 @@ describe("requestors", () => {
     test("requestor cannot have their receivers called more than once", () => {
         const action = mock.fn();
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<string>} */
         const requestor = receiver => {
             receiver({ value: "value" });
             receiver({ value: "value" });
@@ -202,7 +202,7 @@ describe("requestors", () => {
     test("requestor called => receiver queued => run cancelled, then no receiver called", () => {
         const action = mock.fn();
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<string>} */
         const requestor = receiver => {
             setTimeout(() => receiver({ value: "value" }), 1);
         }
@@ -224,7 +224,7 @@ describe("requestors", () => {
         const messageStore = [];
 
         const getRequestor = () => 
-            /** @type {import("../../../public-types.js").Requestor} */
+            /** @type {import("../../../public-types.js").Requestor<never>} */
             (receiver, message) => {
                 messageStore.push(message);
             }
@@ -250,7 +250,7 @@ describe("requestors", () => {
         const secondMessage = "message02";
 
         const getRequestor = () => 
-            /** @type {import("../../../public-types.js").Requestor} */
+            /** @type {import("../../../public-types.js").Requestor<string>} */
             (receiver, message) => {
                 messageStore.push(message)
                 receiver({ value: secondMessage });
@@ -273,7 +273,7 @@ describe("action", () => {
     test("action is called for each requestor", () => {
         const action = mock.fn();
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<string>} */
         const requestor = receiver => receiver({ value: "value" });
 
         run({
@@ -289,7 +289,7 @@ describe("action", () => {
     test("action is called without value if error occurs", () => {
         const action = mock.fn();
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<never>} */
         const requestor = receiver => {
             throw new Error("error");
         };
@@ -311,7 +311,7 @@ describe("cancellor", () => {
         /** @type {import("../../../private-types.js").Reason[]} */
         const reasonStore = [];
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<string>} */
         const requestor = receiver => {
             setTimeout(() => receiver({ value: "value" }), 1);
             return reason => reasonStore.push(reason);
@@ -333,7 +333,7 @@ describe("cancellor", () => {
         /** @type {number[]} */
         const requestorStore = [];
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<number>} */
         const requestor = receiver => {
             requestorStore.push(0);
             receiver({ value: 0 });
@@ -354,13 +354,13 @@ describe("cancellor", () => {
         /** @type {import("../../../private-types.js").Reason[]} */
         const reasonStore = [];
         
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<string>} */
         const requestor01 = receiver => {
             receiver({ value: "value" });
             return reason => reasonStore.push(reason);
         };
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<string>} */
         const requestor02 = receiver => {
             setTimeout(() => receiver({ value: "value" }), 1);
             return reason => reasonStore.push(reason);
@@ -396,13 +396,13 @@ describe("cancellor", () => {
     });
 
     test("no throw if non-function cancellors or errors in cancellor", () => {
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<never>} */
         const requestor01 = receiver => {
             // @ts-ignore, we are intentionally providing the wrong type
             return "not a function";
         }
 
-        /** @type {import("../../../public-types.js").Requestor} */
+        /** @type {import("../../../public-types.js").Requestor<never>} */
         const requestor02 = receiver => {
             return reason => {
                 throw new Error("error");

@@ -224,7 +224,7 @@ Keep in mind that Parsec should be used as the "next step" in asychronous code m
 
 ## Parsec & TypeScript
 This package includes types for all of the requestor factories in Parsec. In addition, the following types can be imported from `cms-parsec`:
- - `Requestor`: The signature of functions which can act as requestors.
+ - `Requestor<T, U>`: The signature of functions which can act as requestors.
  - `Receiver`: The signature of functions which can act as receivers.
  - `Result`: The type of the single argument consumed by receivers.
  - `Cancellor`: The signature of functions which can act as cancellors.

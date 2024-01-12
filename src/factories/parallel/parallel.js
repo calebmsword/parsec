@@ -13,13 +13,18 @@ import { run } from "../../lib/run/run.js";
 
 /**
  * Creates a requestor which executes multiple requestors concurrently.
- * @param {import("../../../public-types").Requestor[]|import("../../../public-types").ParallelSpec} necessetiesOrSpec 
+ * 
+ * @template T 
+ * 
+ * @template [M=any]
+ * 
+ * @param {import("../../../public-types").Requestor<T, M>[]|import("../../../public-types").ParallelSpec<T, M>} necessetiesOrSpec 
  * If an array, then the argument is an array of requestors. The requestor fails 
  * if any of these requestors fail. If this argument is an object, then it 
  * replaces the `spec` parameter and any additional arguments will be ignored.
  * @param {object} [spec] 
  * Configures parallel.
- * @param {import("../../../public-types").Requestor[]} [spec.optionals] 
+ * @param {import("../../../public-types").Requestor<any, any>[]} [spec.optionals] 
  * An array of optional requestors. The 
  * requestor still succeeds even if any optionals fail. The `timeOption` 
  * property changes how `parallel` handles optionals if a `timeLimit` is 
@@ -34,11 +39,11 @@ import { run } from "../../lib/run/run.js";
  * @param {number} [spec.throttle]
  * The number of requestors which can be simultaneously handled by the server. A 
  * throttle of 0 indicates no throttle.
- * @returns {import("../../../public-types").Requestor} 
+ * @returns {import("../../../public-types").Requestor<T|import("../../../public-types").Result<T>[], M>} 
  * Requestor which calls the array of requestors concurrently.
  */
 export function parallel(necessetiesOrSpec, spec = {}) {
-    /** @type {import("../../../public-types.js").Requestor[]} */
+    /** @type {import("../../../public-types.js").Requestor<T, M>[]} */
     let necessities = [];
 
     if (
@@ -56,7 +61,7 @@ export function parallel(necessetiesOrSpec, spec = {}) {
             evidence: necessetiesOrSpec
         });
 
-    /** @type {import("../../../public-types").ParallelSpec} */
+    /** @type {import("../../../public-types").ParallelSpec<T, M>} */
     const parallelSpec = spec;
 
     const {
@@ -75,7 +80,7 @@ export function parallel(necessetiesOrSpec, spec = {}) {
         timeOption = TimeOption.SKIP_OPTIONALS_IF_TIME_REMAINS 
     } = spec;
 
-    /** @type {import("../../../public-types.js").Requestor[]} */
+    /** @type {import("../../../public-types.js").Requestor<T, M>[]} */
     let requestors;
 
     /** @type {number} */
@@ -114,21 +119,25 @@ export function parallel(necessetiesOrSpec, spec = {}) {
     checkRequestors(requestors, factoryName);
     numberOfNecessities = necessities.length;
 
-    /** @type {import("../../../public-types").Requestor} */
     return function parallelRequestor(receiver, initialMessage) {
         checkReceiver(receiver, factoryName);
 
         let numberPending = requestors.length;
         let numberPendingNecessities = numberOfNecessities;
 
-        /** @type {any[]} */
+        /** @type {import("../../../public-types").Result<T>[]} */
         const results = [];
 
         if (numberPending === 0) {
             receiver(
                 factoryName === FactoryName.SEQUENCE 
-                ? { value: initialMessage } 
-                : { value: results }
+                    ? results.pop() || { 
+                        reason: makeReason({
+                            factoryName,
+                            excuse: "No requestors provided"
+                        })
+                    }
+                    : { value: results }
             );
             return;
         }
@@ -176,7 +185,12 @@ export function parallel(necessetiesOrSpec, spec = {}) {
                     }));
                     receiver(
                         factoryName === FactoryName.SEQUENCE 
-                            ? results.pop() 
+                            ? results.pop() || { 
+                                reason: makeReason({
+                                    factoryName,
+                                    excuse: "No requestors provided"
+                                })
+                            }
                             : { value: results, reason }
                     );
                 }
