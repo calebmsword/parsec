@@ -6,19 +6,91 @@ import {
 import { parallel } from "../parallel/parallel.js";
 
 /**
+ * @template T 
+ * @template [M = any]
+ * @typedef {import("../../../public-types").Requestor<T, M>} Requestor<T, M>
+ */
+
+
+/**
  * Calls requestors in order, passing results from the previous to the next.
  * 
- * @template T 
+ * For HTTP/HTTPS requests, it is convenient to use nebula.
  * 
- * @template M 
+ * @example
+ * ```
+ * import parsec from "cms-parsec";
+ * import { get, post } from "cms-nebula";
  * 
- * @param {import("../../../public-types").Requestor<T, M>[]} requestors 
+ * const saveGruyereToDatabase = parsec.sequence([
+ *     // get a cheese:
+ *     get("https://api.com/cheese/gruyere"),
+ * 
+ *     // post JSON response from get request to:
+ *     post("https://my-database.com/api/cheeses")
+ * ]);
+ * 
+ * // make request
+ * saveGruyereToDatabase(({ value, reason }) => {
+ *     if (value === undefined) {
+ *         console.log("Failure because", reason);
+ *         return;
+ *     }
+ *     
+ *     console.log("Success!\n", value);
+ * });
+ * ```
+ * 
+ * More generally:
+ * 
+ * @example
+ * ```
+ * import parsec from "cms-parsec";
+ * 
+ * const mySequenceRequestor = parsec.sequence([
+ *     (receiver, message) => {
+ *         // gets intial message, passes along 
+ *         // new message through value
+ *         receiver({ value: message + " world"});
+ *     },
+ *     (receiver, message) => {
+ *         // receives previous requestor result 
+ *         // value as message 
+ *         receiver({ value: message + "!"});
+ *     }
+ * ]);
+ * 
+ * mySequenceRequestor(({ value }) => {
+ *     console.log(value);  // "Hello world!"
+ * 
+ * // pass an optional initial message
+ * }, "Hello");
+ * ```
+ * 
+ * Important details:
+ *  - Success occurs when every requestor succeeds. If any failure occurs in 
+ * some requestor or the optional time limit is reached before the sequence 
+ * ends, the sequence fails.
+ *  - The requestor returned by `parallel` has a cancellor. It calls the 
+ * cancellors for any pending requestors in the sequence.
+ *  - Each requestor is called **asycnhronously**, even if the requestor 
+ * itself is fully synchronous.
+ * 
+ * @template T
+ * The type of `value` property in the {@link Result} for the requestor 
+ * returned by this factory.
+ * @template M
+ * The type of the initial message for the requestor returned by this 
+ * factory.
+ * @template P
+ * 
+ * @param {[Requestor<any, M>, ...Requestor<any>[], Requestor<T>]} requestors 
  * An array of requestors.
  * @param {object} [spec={}] 
  * Configures sequence.
  * @param {number} [spec.timeLimit] 
- * The optional time limit.
- * @returns {import("../../../public-types").Requestor<T, M>} 
+ * An time limit, in milliseconds, that the sequence must finish before.
+ * @returns {Requestor<T, M>} 
  * The sequence requestor. Upon execution, starts the sequence.
  */
 export function sequence(requestors, spec = {}) {

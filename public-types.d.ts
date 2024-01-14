@@ -1,6 +1,5 @@
-import parsec, { TimeOption } from "./src/parsec.js";
-
 import { __factoryName__ } from "./src/lib/constants";
+import { sequence, parallel, race, fallback } from "./src/parsec";
 
 /**
  * How the result of a requestor's unit of work is represented.
@@ -92,9 +91,22 @@ export interface FallbackSpec {
     timeLimit?: number
 }
 
-declare module "cms-parsec" {
-    export default parsec;
+export interface Parsec {
+    sequence: typeof sequence,
+    parallel: typeof parallel,
+    race: typeof race,
+    fallback: typeof fallback
+}
 
+/**
+ * Contains the core four.
+ */
+declare const parsec: Parsec;
+
+export default parsec;
+
+
+declare module "cms-parsec" {
     /**
      * Calls requestors in order, passing results from the previous to the next.
      * 
@@ -159,28 +171,26 @@ declare module "cms-parsec" {
      *  - Each requestor is called **asycnhronously**, even if the requestor 
      * itself is fully synchronous.
      * @template T
-     * The type of the `value` property each {@link Requestor} can have in its 
-     * sucessful {@link Result}.
-     * @template U
      * The type of `value` property in the {@link Result} for the requestor 
      * returned by this factory.
-     * @template M
+     * @template [M=any]
      * The type of the initial message for the requestor returned by this 
      * factory.
-     * @param {import("../../../public-types").Requestor[]} requestors 
+     * @template P 
+     * @param {SequenceableRequestors<M, U>} requestors 
      * An array of requestors.
      * @param {object} [spec={}] 
      * Configures sequence.
      * @param {number} [spec.timeLimit] 
      * An time limit, in milliseconds, that the sequence must finish before.
-     * @returns {import("../../../public-types").Requestor} 
+     * @returns {Requestor<U, M>} 
      * The sequence requestor. Upon execution, starts the sequence.
      */
-    export function sequence<T, U, M = any>(
-        requestors: [Requestor<T, M>, ...Requestor<T>[], Requestor<U>], 
-        spec: SequenceSpec
-    ) : Requestor<U, M>;
-    
+    export function sequence<T, M = any>(
+        requestors: [Requestor<any, M>, ...Requestor<any>[], Requestor<T>],
+        spec?: SequenceSpec
+    ) : Requestor<T, M>;
+
     /**
      * Creates a requestor which executes multiple requestors concurrently.
      * 
@@ -238,14 +248,14 @@ declare module "cms-parsec" {
      * The type of the message which can be passed to the requestor returned by 
      * this factory.
      * 
-     * @param {import("../../../public-types").Requestor[]|import("../../../public-types").ParallelSpec} necessetiesOrSpec 
+     * @param {Requestor[]|ParallelSpec} necessetiesOrSpec 
      * If an array, then the argument is an array of requestors. The requestor 
      * fails if any of these requestors fail. If this argument is an object, 
      * then it replaces the `spec` parameter and any additional arguments will 
      * be ignored.
      * @param {object} [spec] 
      * Configures parallel.
-     * @param {import("../../../public-types").Requestor[]} [spec.optionals] 
+     * @param {Requestor[]} [spec.optionals] 
      * An array of optional requestors. The 
      * requestor still succeeds even if any optionals fail. The `timeOption` 
      * property changes how `parallel` handles optionals if a `timeLimit` is 
@@ -260,7 +270,7 @@ declare module "cms-parsec" {
      * @param {number} [spec.throttle]
      * The number of requestors which can be simultaneously handled by the 
      * server. A throttle of 0 indicates no throttle.
-     * @returns {import("../../../public-types").Requestor} 
+     * @returns {Requestor<T, M>} 
      * Requestor which executes a collection of requestors concurrently.
      */
     export function parallel<T, M = any>(
@@ -369,7 +379,4 @@ declare module "cms-parsec" {
         requestors: Requestor<T, M>[],
         spec: FallbackSpec
     ) : Requestor<T, M>;
-    
-    
-    export { TimeOption };
 }
