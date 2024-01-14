@@ -1,5 +1,5 @@
 {
-  "name": "parsec",
+  "name": "cms-parsec",
   "type": "module",
   "types": "public-types.d.ts",
   "version": "0.0.0",
@@ -22,6 +22,7 @@
   "author": "Caleb Sword",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^20.10.6",
     "typescript": "^5.3.3"
   }
 }
