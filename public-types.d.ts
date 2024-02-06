@@ -69,8 +69,16 @@ export type Receiver<T> = (result: Result<T>) => void;
 export type Requestor<T, M = any> =
     (receiver: Receiver<T>, message?: M) => Cancellor|void;
 
+export function SetTimeoutLike<Targs extends any[]>(
+    callback: (...args: Targs) => any,
+    timeout: number,
+    ...args: Targs
+) : any
+
 export interface SequenceSpec {
-    timeLimit?: number
+    timeLimit?: number,
+    eventLoopAdapter?: typeof SetTimeoutLike,
+    ptcMode?: boolean
 }
 
 export interface ParallelSpec<T, M> {
@@ -78,17 +86,23 @@ export interface ParallelSpec<T, M> {
     timeLimit?: number,
     timeOption?: string,
     throttle?: number,
+    eventLoopAdapter?: typeof SetTimeoutLike,
+    ptcMode?: boolean
     [__factoryName__]?: string
 }
 
 export interface RaceSpec {
     timeLimit?: number,
     throttle?: number,
+    eventLoopAdapter?: typeof SetTimeoutLike,
+    ptcMode?: boolean
     [__factoryName__]?: string
 }
 
 export interface FallbackSpec {
     timeLimit?: number
+    eventLoopAdapter?: typeof SetTimeoutLike,
+    ptcMode?: boolean
 }
 
 export interface Parsec {
@@ -183,11 +197,28 @@ declare module "cms-parsec" {
      * Configures sequence.
      * @param {number} [spec.timeLimit] 
      * An time limit, in milliseconds, that the sequence must finish before.
+     * @param {SetTimeoutLike} [spec.eventLoopAdapter]
+     * If provided, this function will be used to schedule callbacks in the 
+     * event loop. By default, `run` uses `setTimeout` with a timeout of `0` to 
+     * immediately schedule requestors in future turns of the event loop. If you 
+     * are using a framework which manages the event loop itself, then provide a 
+     * function with the same API as `setTimeout` to integrate Parsec into that 
+     * framework.
+     * @param {boolean} [spec.ptcMode = false]
+     * By default, `run` only calls one requestor in each turn of the event 
+     * loop. If you would like synchronous requestors to call the next requestor 
+     * in the same turn, then set `ptcMode` to `true`.
+     * PTC is short for "proper tail call". This means that, in PTC Mode, the 
+     * execution of the next requestor will be performed with a proper tail 
+     * call. If PTCs are implemented in your JavaScript runtime, then the 
+     * callstack will never explode when this feature is enabled. Unfortunately, 
+     * as of February 2024, all major browsers do not implement PTCs, but it is 
+     * part of the ECMAScript specification so it should be added someday.
      * @returns {Requestor<U, M>} 
      * The sequence requestor. Upon execution, starts the sequence.
      */
     export function sequence<T, M = any>(
-        requestors: [Requestor<any, M>, ...Requestor<any>[], Requestor<T>],
+        requestors: [Requestor<any, M>, ...Requestor<any>[], Requestor<T>] | [Requestor<T, M>] | [],
         spec?: SequenceSpec
     ) : Requestor<T, M>;
 
@@ -270,13 +301,30 @@ declare module "cms-parsec" {
      * @param {number} [spec.throttle]
      * The number of requestors which can be simultaneously handled by the 
      * server. A throttle of 0 indicates no throttle.
+     * @param {SetTimeoutLike} [spec.eventLoopAdapter]
+     * If provided, this function will be used to schedule callbacks in the 
+     * event loop. By default, `run` uses `setTimeout` with a timeout of `0` to 
+     * immediately schedule requestors in future turns of the event loop. If you 
+     * are using a framework which manages the event loop itself, then provide a 
+     * function with the same API as `setTimeout` to integrate Parsec into that 
+     * framework.
+     * @param {boolean} [spec.ptcMode = false]
+     * By default, `run` only calls one requestor in each turn of the event 
+     * loop. If you would like synchronous requestors to call the next requestor 
+     * in the same turn, then set `ptcMode` to `true`.
+     * PTC is short for "proper tail call". This means that, in PTC Mode, the 
+     * execution of the next requestor will be performed with a proper tail 
+     * call. If PTCs are implemented in your JavaScript runtime, then the 
+     * callstack will never explode when this feature is enabled. Unfortunately, 
+     * as of February 2024, all major browsers do not implement PTCs, but it is 
+     * part of the ECMAScript specification so it should be added someday.
      * @returns {Requestor<T, M>} 
      * Requestor which executes a collection of requestors concurrently.
      */
     export function parallel<T, M = any>(
         necessetiesOrSpec: Requestor<T, M>[],
         spec: ParallelSpec<T, M>
-    ) : Requestor<T[], M>;
+    ) : Requestor<Result<T>[], M>;
 
     /**
      * Runs multiple requestors concurrently but only succeeds with one value.
@@ -323,6 +371,23 @@ declare module "cms-parsec" {
      * A time limit in milliseconds.
      * @param {number} [spec.throttle]
      * Limits the number of requestors executed in a tick.
+     * @param {SetTimeoutLike} [spec.eventLoopAdapter]
+     * If provided, this function will be used to schedule callbacks in the 
+     * event loop. By default, `run` uses `setTimeout` with a timeout of `0` to 
+     * immediately schedule requestors in future turns of the event loop. If you 
+     * are using a framework which manages the event loop itself, then provide a 
+     * function with the same API as `setTimeout` to integrate Parsec into that 
+     * framework.
+     * @param {boolean} [spec.ptcMode = false]
+     * By default, `run` only calls one requestor in each turn of the event 
+     * loop. If you would like synchronous requestors to call the next requestor 
+     * in the same turn, then set `ptcMode` to `true`.
+     * PTC is short for "proper tail call". This means that, in PTC Mode, the 
+     * execution of the next requestor will be performed with a proper tail 
+     * call. If PTCs are implemented in your JavaScript runtime, then the 
+     * callstack will never explode when this feature is enabled. Unfortunately, 
+     * as of February 2024, all major browsers do not implement PTCs, but it is 
+     * part of the ECMAScript specification so it should be added someday.
      * @returns {import("../../../public-types").Requestor<any, any>} 
      * A requestor. Calling this method starts the race.
      */
@@ -372,6 +437,23 @@ declare module "cms-parsec" {
      * Configures fallback.
      * @param {number} [spec.timeLimit] 
      * An optional time limit.
+     * @param {SetTimeoutLike} [spec.eventLoopAdapter]
+     * If provided, this function will be used to schedule callbacks in the 
+     * event loop. By default, `run` uses `setTimeout` with a timeout of `0` to 
+     * immediately schedule requestors in future turns of the event loop. If you 
+     * are using a framework which manages the event loop itself, then provide a 
+     * function with the same API as `setTimeout` to integrate Parsec into that 
+     * framework.
+     * @param {boolean} [spec.ptcMode = false]
+     * By default, `run` only calls one requestor in each turn of the event 
+     * loop. If you would like synchronous requestors to call the next requestor 
+     * in the same turn, then set `ptcMode` to `true`.
+     * PTC is short for "proper tail call". This means that, in PTC Mode, the 
+     * execution of the next requestor will be performed with a proper tail 
+     * call. If PTCs are implemented in your JavaScript runtime, then the 
+     * callstack will never explode when this feature is enabled. Unfortunately, 
+     * as of February 2024, all major browsers do not implement PTCs, but it is 
+     * part of the ECMAScript specification so it should be added someday.
      * @returns {import("../../../public-types.js").Requestor} 
      * A requestor function. Upon execution, starts the fallback request.
      */

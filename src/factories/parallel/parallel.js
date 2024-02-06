@@ -12,19 +12,30 @@ import {
 import { run } from "../../lib/run/run.js";
 
 /**
+ * @template T, M
+ * @typedef {import("../../../public-types").Requestor<T, M>} Requestor 
+ */
+
+
+/**
+ * @template T 
+ * @typedef {import("../../../public-types").Result<T>} Result
+ */
+
+/**
  * Creates a requestor which executes multiple requestors concurrently.
  * 
  * @template T 
  * 
  * @template [M=any]
  * 
- * @param {import("../../../public-types").Requestor<T, M>[]|import("../../../public-types").ParallelSpec<T, M>} necessetiesOrSpec 
+ * @param {Requestor<T, M>[]|import("../../../public-types").ParallelSpec<T, M>} necessetiesOrSpec 
  * If an array, then the argument is an array of requestors. The requestor fails 
  * if any of these requestors fail. If this argument is an object, then it 
  * replaces the `spec` parameter and any additional arguments will be ignored.
  * @param {object} [spec] 
  * Configures parallel.
- * @param {import("../../../public-types").Requestor<any, any>[]} [spec.optionals] 
+ * @param {Requestor<any, any>[]} [spec.optionals] 
  * An array of optional requestors. The 
  * requestor still succeeds even if any optionals fail. The `timeOption` 
  * property changes how `parallel` handles optionals if a `timeLimit` is 
@@ -39,7 +50,11 @@ import { run } from "../../lib/run/run.js";
  * @param {number} [spec.throttle]
  * The number of requestors which can be simultaneously handled by the server. A 
  * throttle of 0 indicates no throttle.
- * @returns {import("../../../public-types").Requestor<T|import("../../../public-types").Result<T>[], M>} 
+ * @param {import("../../../public-types").SetTimeoutLike} [spec.eventLoopAdapter]
+ * See {@link run}.
+ * @param {boolean} [spec.ptcMode = false]
+ * See {@link run}.
+ * @returns {Requestor<T|Result<T>[], M>} 
  * Requestor which calls the array of requestors concurrently.
  */
 export function parallel(necessetiesOrSpec, spec = {}) {
@@ -68,6 +83,8 @@ export function parallel(necessetiesOrSpec, spec = {}) {
         optionals,
         timeLimit,
         throttle,
+        eventLoopAdapter,
+        ptcMode = false
     } = parallelSpec
 
     // `spec[__factoryName__]` can be something other than 
@@ -225,7 +242,9 @@ export function parallel(necessetiesOrSpec, spec = {}) {
                 }
             },
             timeLimit,
-            throttle
+            throttle,
+            eventLoopAdapter,
+            ptcMode
         });
 
         return cancel;

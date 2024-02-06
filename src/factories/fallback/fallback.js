@@ -37,17 +37,25 @@ import { race } from "../race/race.js";
  * Configures fallback.
  * @param {number} [spec.timeLimit] 
  * An optional time limit.
+ * @param {import("../../../public-types").SetTimeoutLike} [spec.eventLoopAdapter]
+ * See the documentation for `run`.
+ * @param {boolean} [spec.ptcMode = false]
+ * See the documentation for `run`.
  * @returns {import("../../../public-types.js").Requestor<any, any>} 
  * A requestor function. Upon execution, starts the fallback 
  * request.
  */
 export function fallback(requestors, spec = {}) {
     const {
-        timeLimit
+        timeLimit,
+        eventLoopAdapter,
+        ptcMode
     } = spec;
     return race(requestors, {
         timeLimit,
         throttle: 1,
+        eventLoopAdapter,
+        ptcMode,
         // @ts-ignore, secret hidden parameter
         [__factoryName__]: FactoryName.FALLBACK
     });

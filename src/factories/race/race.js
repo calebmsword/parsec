@@ -22,13 +22,19 @@ import { run } from "../../lib/run/run.js";
  * A time limit in milliseconds.
  * @param {number} [spec.throttle]
  * Limits the number of requestors executed in a tick.
+ * @param {import("../../../public-types").SetTimeoutLike} [spec.eventLoopAdapter]
+ * See {@link run}.
+ * @param {boolean} [spec.ptcMode = false]
+ * See {@link run}.
  * @returns {import("../../../public-types").Requestor<T, M>} 
  * A requestor. Calling this method starts the race.
  */
 export function race(requestors, spec = {}) {
     const {
         timeLimit,
-        throttle
+        throttle,
+        eventLoopAdapter,
+        ptcMode = false
     } = spec;
 
     /** @type {import("../../../public-types.js").RaceSpec} */
@@ -84,7 +90,9 @@ export function race(requestors, spec = {}) {
                 receiver({ reason });
             },
             timeLimit,
-            throttle
+            throttle,
+            eventLoopAdapter,
+            ptcMode
         });
         return cancel;
     };

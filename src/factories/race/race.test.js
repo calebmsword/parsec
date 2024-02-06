@@ -33,6 +33,42 @@ describe("arguments", () => {
             else throw error;
         }
     });
+
+    test("can be run in PTC Mode", () => {
+        race([
+            receiver => {
+                setTimeout(() => {
+                    receiver({ reason: "fail" });
+                }, 100);
+            },
+            receiver => {
+                receiver({ value: "success" });
+            }
+        ], {
+            throttle: 1,
+            ptcMode: true,
+        })(({ value }) => {
+            assert.strictEqual("success", value);
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
+
+    test("an eventLoopAdapter can be provided", () => {
+        let adapterCalled = false;
+
+        race([receiver => receiver({ value: "success" })], {
+            throttle: 1,
+            eventLoopAdapter: (callback, timeout, ...args) => {
+                adapterCalled = true;
+                setTimeout(callback, timeout, ...args);
+            },
+        })(_result => {
+            assert.strictEqual(true, adapterCalled);
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
 });
 
 describe("race requestors", () => {

@@ -11,7 +11,6 @@ import { parallel } from "../parallel/parallel.js";
  * @typedef {import("../../../public-types").Requestor<T, M>} Requestor<T, M>
  */
 
-
 /**
  * Calls requestors in order, passing results from the previous to the next.
  * 
@@ -82,7 +81,6 @@ import { parallel } from "../parallel/parallel.js";
  * @template M
  * The type of the initial message for the requestor returned by this 
  * factory.
- * @template P
  * 
  * @param {[Requestor<any, M>, ...Requestor<any>[], Requestor<T>]} requestors 
  * An array of requestors.
@@ -90,11 +88,15 @@ import { parallel } from "../parallel/parallel.js";
  * Configures sequence.
  * @param {number} [spec.timeLimit] 
  * An time limit, in milliseconds, that the sequence must finish before.
+ * @param {import("../../../public-types").SetTimeoutLike} [spec.eventLoopAdapter]
+ * See the documentation for `run`.
+ * @param {boolean} [spec.ptcMode = false]
+ * See the documentation for `run`.
  * @returns {Requestor<T, M>} 
  * The sequence requestor. Upon execution, starts the sequence.
  */
 export function sequence(requestors, spec = {}) {
-    const { timeLimit } = spec;
+    const { timeLimit, eventLoopAdapter, ptcMode = false } = spec;
 
     // @ts-ignore
     // The Requestor<Result<T>, M> type only occurs if __factoryName__ is not 
@@ -103,6 +105,8 @@ export function sequence(requestors, spec = {}) {
         timeLimit,
         timeOption: TimeOption.SKIP_OPTIONALS_IF_TIME_REMAINS,
         throttle: 1,
+        eventLoopAdapter,
+        ptcMode,
         // @ts-ignore, secret undocumented parameter
         [__factoryName__]: FactoryName.SEQUENCE
     });

@@ -3,7 +3,7 @@ import { makeReason } from "../utils/utils.js";
 
 /**
  * Launches requestors and manages timing, cancellation, and throttling.
- * `run` is the most important function is Parsec.
+ * `run` is the most important function in Parsec.
  *
  * @template T 
  * 
@@ -27,7 +27,7 @@ import { makeReason } from "../utils/utils.js";
  * @param {any} [spec.initialMessage]
  * The message passed to the first requestor. In some cases, it will be the 
  * message passed to all requestors.
- * @param {Function} [spec.timeout] 
+ * @param {() => any} [spec.timeout] 
  * A timeout callback. It takes no arguments. The caller of `run` can inject 
  * specific time-delayed asynchronous behavior, if necessary, by providing this 
  * optional method.
@@ -37,6 +37,22 @@ import { makeReason } from "../utils/utils.js";
  * @param {number} [spec.throttle] 
  * Determines the number of requestors which are allowed to run simultaneously. 
  * This argument is optional. A value of `0` indicates no throttle is applied.
+ * @param {import("../../../public-types.js").SetTimeoutLike} [spec.eventLoopAdapter]
+ * If provided, this function will be used to schedule callbacks in the event 
+ * loop. By default, `run` uses `setTimeout` with a timeout of `0` to 
+ * immediately schedule requestors in future turns of the event loop. If you are 
+ * using a framework which manages the event loop itself, then provide a 
+ * function with the same API as `setTimeout` to integrate Parsec into that 
+ * framework.
+ * @param {boolean} [spec.ptcMode = false]
+ * By default, `run` only calls one requestor in each turn of the event loop. 
+ * If you would like synchronous requestors to call the next requestor in the 
+ * same turn, then set `ptcMode` to `true`.
+ * PTC is short for "proper tail call". This means that, in PTC Mode, the 
+ * execution of the next requestor will be performed with a proper tail call. If 
+ * PTCs are implemented in your JavaScript runtime, then the callstack will 
+ * never explode when this feature is enabled. Unfortunately, as of February 
+ * 2024, all major browsers do not implement PTCs.
  * @returns {import("../../../public-types.js").Cancellor} 
  * A cancellor. Executes cancellors for all executed requestors which returned a 
  * cancellor.
@@ -49,7 +65,9 @@ export function run(spec) {
         action, 
         timeout, 
         timeLimit, 
-        throttle = 0
+        eventLoopAdapter,
+        throttle = 0,
+        ptcMode = false,
     } = spec;
 
     /** @type {Array<import("../../../public-types").Cancellor|void>|undefined} */
@@ -65,6 +83,14 @@ export function run(spec) {
             excuse: "action must be callable",
             evidence: action
         });
+    }
+
+    /**
+     * @type {import("../../../public-types").SetTimeoutLike}
+     */
+    let eventually = setTimeout;
+    if (typeof eventLoopAdapter === "function") {
+        eventually = eventLoopAdapter;
     }
 
     /**
@@ -113,17 +139,15 @@ export function run(spec) {
                     // requestor in the array is called. However, there's no 
                     // need to pollute the event queue with callbacks that do 
                     // nothing so we'll add this extra check.
-                    if (nextIndex < requestors.length)
-                        setTimeout(startRequestor,
-                                   0,
-                                   factoryName === FactoryName.SEQUENCE 
-
-                                   // pass result from former to next
-                                   ? value
-
-                                   // pass same message to each requestor
-                                   : initialMessage
-                        );
+                    if (nextIndex < requestors.length) {
+                        const message = factoryName === FactoryName.SEQUENCE 
+                            // pass result from former to next
+                            ? value
+                            // pass same message to each
+                            : initialMessage;
+                        if (ptcMode) return startRequestor(message);
+                        else eventually(startRequestor, 0, message);
+                    }
                 },
                 message
             );
@@ -165,7 +189,7 @@ export function run(spec) {
                 evidence: timeout
             });
         else {
-            timerId = setTimeout(timeout, timeLimit);
+            timerId = eventually(timeout, timeLimit);
         }
     }
 
@@ -184,7 +208,7 @@ export function run(spec) {
     // so if we don't get all requestors now, we will get the rest later.
     let amountToParallelize = Math.min(throttle || Infinity, requestors.length);
     while (amountToParallelize-- > 0) 
-        setTimeout(startRequestor, 0, initialMessage);
+        eventually(startRequestor, 0, initialMessage);
 
     const DEFAULT_CANCEL_REASON = makeReason({ 
         factoryName,

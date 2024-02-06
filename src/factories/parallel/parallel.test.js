@@ -615,4 +615,68 @@ describe("misc", () => {
             assert.deepStrictEqual(emptyArray, undef);
         });
     });
+
+    test("can be run in PTC Mode", () => {
+        /**
+         * @template T, [M=any]
+         * @typedef {import("../../../public-types").Requestor<T, M>} Requestor
+         */
+
+        /**
+         * @template T
+         * @typedef {import("../../../public-types").Result<T>} Result
+         */
+
+        /** @type {Requestor<string|Result<string>[]>} */
+        const requestor = parallel([
+            receiver => {
+                setTimeout(() => receiver({ value: "success" }), 100);
+            },
+            receiver => {
+                receiver({ value: "success" });
+            }
+        ], {
+            throttle: 1,
+            ptcMode: true
+        });
+        
+        requestor(result => {
+            if (Array.isArray(result.value)) {
+                const results = result.value || [];
+            
+                results.forEach(
+                    ({ value }) => {
+                        assert.deepStrictEqual(["success", "success"], value);
+                    }
+                );
+            }
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
+
+    test("eventLoopAdapter can be provided", () => {
+        let adapterCalled = false;
+
+        const requestor = parallel([
+            receiver => {
+                setTimeout(() => receiver({ value: "success" }), 100);
+            },
+            receiver => {
+                receiver({ value: "success" });
+            }
+        ], {
+            throttle: 1,
+            eventLoopAdapter: (callback, timeout, ...args) => {
+                adapterCalled = true;
+                return setTimeout(callback, timeout, ...args);
+            }
+        });
+        
+        requestor(_result => {
+            assert.strictEqual(adapterCalled, true);
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
 });

@@ -64,4 +64,43 @@ describe("fallback", () => {
         mock.timers.tick(0);
         mock.timers.tick(100);
     });
+
+    test("can be run in PTC Mode", () => {
+        fallback([
+            receiver => {
+                setTimeout(() => receiver({ reason: "fail" }), 100);
+            },
+            receiver => {
+                receiver({ value: "success" });
+            }
+        ], {
+            ptcMode: true
+        })(({ value }) => {
+            assert.strictEqual("success", value);
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
+
+    test("eventLoopAdapter can be provided", () => {
+        let adapterCalled = false;
+
+        fallback([
+            receiver => {
+                setTimeout(() => receiver({ reason: "fail" }), 100);
+            },
+            receiver => {
+                receiver({ value: "success" });
+            }
+        ], {
+            eventLoopAdapter: (callback, timeout, ...args) => {
+                adapterCalled = true;
+                return setTimeout(callback, timeout, ...args);
+            }
+        })(_result => {
+            assert.strictEqual(adapterCalled, true);
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
 });

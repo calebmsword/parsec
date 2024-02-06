@@ -63,4 +63,46 @@ describe("sequence", () => {
         }, 0);
         mock.timers.tick(0);
     });
+
+    test("can be run in PTC Mode", () => {
+        let calls = 0;
+
+        sequence([
+            receiver => {
+                receiver({ value: "success" })
+            },
+            receiver => {
+                receiver({ value: "success" });
+            }
+        ], {
+            ptcMode: true,
+            eventLoopAdapter: (callback, timeout, ...args) => {
+                calls++;
+                return setTimeout(callback, timeout, ...args);
+            }
+        })(({ value }) => {
+            assert.strictEqual(calls, 1);
+            assert.strictEqual("success", value);
+        });
+
+        mock.timers.tick(0);
+    });
+
+    test("an eventLoopAdapter can be provided", () => {
+        let adapterCalled = false;
+
+        sequence([
+            receiver => receiver({ value: "success" }),
+            receiver => receiver({ value: "success" })
+        ], {
+            eventLoopAdapter: (callback, timeout, ...args) => {
+                adapterCalled = true;
+                setTimeout(callback, timeout, ...args);
+            },
+        })(_result => {
+            assert.strictEqual(true, adapterCalled);
+        });
+        mock.timers.tick(0);
+        mock.timers.tick(100);
+    });
 });
